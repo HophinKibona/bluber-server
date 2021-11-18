@@ -8,8 +8,8 @@ import mimetypes
 from wsgiref.handlers import read_environ
 from wsgiref.simple_server import make_server
 
-from util import to_kml, to_kml_roads, read_osm_data
-from lab import build_auxiliary_structures, get_nearest_roads
+from util import to_kml, read_osm_data
+from lab import find_short_path, find_fast_path, build_auxiliary_structures
 
 try:
     dataset = sys.argv[1]
@@ -41,7 +41,7 @@ except:
 
 print('building auxiliary structures...')
 t = time.time()
-ways_graph, node_data = build_auxiliary_structures(nodes_filename, ways_filename)
+AUX = build_auxiliary_structures(nodes_filename, ways_filename)
 print('auxiliary structures built in %.02f seconds.' % (time.time() - t,))
 
 with open(os.path.join(app_root, 'index.html'), 'rb') as f:
@@ -61,22 +61,19 @@ def parse_post(environ):
 def application(environ, start_response):
     path = environ.get('PATH_INFO', '/') or '/'
 
-    if path == "/plan":
+    if path == '/route':
         params = parse_post(environ)
-        func = get_nearest_roads
+        func = find_short_path if params.get('type', None) != 'fast' else find_fast_path
         loc1 = float(params['startLat']), float(params['startLon'])
         loc2 = float(params['endLat']), float(params['endLon'])
-        roads = func(ways_graph, node_data, loc1, loc2)
-
-        if roads == []:
-            out = {'ok': False, 'error': 'No road.'}
+        route = func(AUX, loc1, loc2)
+        if route is None:
+            out = {'ok': False, 'error': 'No path found.'}
         else:
-            out = {'ok': True, 'kml': to_kml(roads[0])}
+            out = {'ok': True, 'kml': to_kml(route)}
         body = json.dumps(out).encode('utf-8')
         type_ = 'application/json'
         status = '200 OK'
-
-  
     else:
         if path == '/':
             # main page
