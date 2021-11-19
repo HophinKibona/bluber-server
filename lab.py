@@ -3,7 +3,9 @@
 from util import read_osm_data,read_osm_data_s3, great_circle_distance, to_local_kml_url
 
 import time
-
+from node_data import node_data_saved
+from nodes_graph import nodes_graph_saved
+from node_data_all import node_data_all_saved
 
 ALLOWED_HIGHWAY_TYPES = {
     'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified',
@@ -97,56 +99,58 @@ d_mid_lon = (d_min_lon + d_max_lon)/2
 def get_loc_graph(loc):
     lat, lon = loc
     if a_min_lat <= lat <= a_mid_lat and a_mid_lon <= lon <= a_max_lon:
-        return a_top_left, 1
+        return a_top_left, 0
 
     if a_min_lat <= lat <= a_mid_lat and a_min_lon <= lon <= a_mid_lon:
-        return a_bottom_left, 4
+        return a_bottom_left, 1
 
     if a_mid_lat <= lat <= a_max_lat and a_min_lon <= lon <= a_mid_lon:
-        return a_bottom_right, 3
+        return a_bottom_right, 2
 
     if a_mid_lat <= lat <= a_max_lat and a_mid_lon <= lon <= a_max_lon:
-        return a_top_right, 2
+        return a_top_right, 3
 
     ##FOR B
     if b_min_lat <= lat <= b_mid_lat and b_mid_lon <= lon <= b_max_lon:
-        return b_top_left, 1
+        return b_top_left, 4
 
     if b_min_lat <= lat <= b_mid_lat and b_min_lon <= lon <= b_mid_lon:
-        return b_bottom_left, 4
+        return b_bottom_left, 5
 
     if b_mid_lat <= lat <= b_max_lat and b_min_lon <= lon <= b_mid_lon:
-        return b_bottom_right, 3
+        return b_bottom_right, 6
 
     if b_mid_lat <= lat <= b_max_lat and b_mid_lon <= lon <= b_max_lon:
-        return b_top_right, 2
+        return b_top_right, 7
 
     ##FOR C
     if c_min_lat <= lat <= c_mid_lat and c_mid_lon <= lon <= c_max_lon:
-        return c_top_left, 1
+        return c_top_left, 8
 
     if c_min_lat <= lat <= c_mid_lat and c_min_lon <= lon <= c_mid_lon:
-        return c_bottom_left, 4
+        return c_bottom_left, 9
 
     if c_mid_lat <= lat <= c_max_lat and c_min_lon <= lon <= c_mid_lon:
-        return c_bottom_right, 3
+        return c_bottom_right, 10
 
     if c_mid_lat <= lat <= c_max_lat and c_mid_lon <= lon <= c_max_lon:
-        return c_top_right, 2
+        return c_top_right, 11
 
     ##FOR D
     if d_min_lat <= lat <= d_mid_lat and d_mid_lon <= lon <= d_max_lon:
-        return d_top_left, 1
+        return d_top_left, 12
 
     if d_min_lat <= lat <= d_mid_lat and d_min_lon <= lon <= d_mid_lon:
-        return d_bottom_left, 4
+        return d_bottom_left, 13
 
     if d_mid_lat <= lat <= d_max_lat and d_min_lon <= lon <= d_mid_lon:
-        return d_bottom_right, 3
+        return d_bottom_right, 14
 
     if d_mid_lat <= lat <= d_max_lat and d_mid_lon <= lon <= d_max_lon:
-        return d_top_right, 2
+        return d_top_right, 15
 
+
+graphs = node_data_saved
 
 
 # def get_loc_graph(loc):
@@ -176,26 +180,34 @@ def build_auxiliary_structures(nodes_filename, ways_filename):
     """
 
     # get all the allowed ways and the nodes along those ways
-    nodes_graph = {}
+    nodes_graph = nodes_graph_saved
     speeds = {}
-    node_data = {}
+    node_data = node_data_all_saved
     
-    for way in read_osm_data(ways_filename):
-        if way["tags"].get("highway", None) in ALLOWED_HIGHWAY_TYPES:
-            for node_1, node_2 in zip(way["nodes"], way["nodes"][1:]):
-                speed = 1
-                update_auxiliary_structures(nodes_graph, speeds, node_1, node_2, speed)
-                if way["tags"].get("oneway", "no") == "no":
-                    update_auxiliary_structures(nodes_graph, speeds, node_2, node_1, speed)
+    # for way in read_osm_data(ways_filename):
+    #     if way["tags"].get("highway", None) in ALLOWED_HIGHWAY_TYPES:
+    #         for node_1, node_2 in zip(way["nodes"], way["nodes"][1:]):
+    #             speed = 1
+    #             update_auxiliary_structures(nodes_graph, speeds, node_1, node_2, speed)
+    #             if way["tags"].get("oneway", "no") == "no":
+    #                 update_auxiliary_structures(nodes_graph, speeds, node_2, node_1, speed)
+    
+    # node_data = {}
+    # for node in read_osm_data(nodes_filename):
+    #     if node["id"] in nodes_graph:
+    #         node_data[node["id"]] = (node["lat"], node["lon"])
 
-    for node in read_osm_data(nodes_filename):
-        if node["id"] in nodes_graph:
-            node_data[node["id"]] = (node["lat"], node["lon"])
+            # id, loc = node["id"], (node["lat"], node["lon"])
+            # graph, _ = get_loc_graph(loc)
+            # graph[id] = loc
 
-            id, loc = node["id"], (node["lat"], node["lon"])
-            graph, _ = get_loc_graph(loc)
-            graph[id] = loc
+          
+    # outF = open("nodes_data_all.txt", "w")
+    # outF.write(str(node_data))
+    # outF.close()
 
+    
+    
     return nodes_graph, node_data, speeds
 
 def build_auxiliary_structures_s3(nodes_data, ways_data):
@@ -211,7 +223,6 @@ def build_auxiliary_structures_s3(nodes_data, ways_data):
 
     # get all the allowed ways and the nodes along those ways
     nodes_graph = {}
-    speeds = {}
     node_data = {}
     
     for way in read_osm_data_s3(ways_data[0],ways_data[1]):
@@ -219,9 +230,9 @@ def build_auxiliary_structures_s3(nodes_data, ways_data):
         if way["tags"].get("highway", None) in ALLOWED_HIGHWAY_TYPES:
             for node_1, node_2 in zip(way["nodes"], way["nodes"][1:]):
                 speed = 1
-                update_auxiliary_structures(nodes_graph, speeds, node_1, node_2, speed)
+                update_auxiliary_structures(nodes_graph, node_1, node_2, speed)
                 if way["tags"].get("oneway", "no") == "no":
-                    update_auxiliary_structures(nodes_graph, speeds, node_2, node_1, speed)
+                    update_auxiliary_structures(nodes_graph, node_2, node_1, speed)
 
     for node in read_osm_data_s3(nodes_data[0],nodes_data[1]):
         if node["id"] in nodes_graph:
@@ -231,16 +242,14 @@ def build_auxiliary_structures_s3(nodes_data, ways_data):
             graph, _ = get_loc_graph(loc)
             graph[id] = loc
 
-    return nodes_graph, node_data, speeds
+    return nodes_graph, node_data
 
-def update_auxiliary_structures(nodes_graph, speeds, node_1, node_2, speed):
+def update_auxiliary_structures(nodes_graph, node_1, node_2, speed):
     """
     Update the auxiliary structures with data about a pair of nodes
     """
     nodes_graph.setdefault(node_1, set()).add(node_2)
     nodes_graph.setdefault(node_2, set())
-    curr_speed = speeds.setdefault((node_1, node_2), -float("inf"))
-    speeds[(node_1, node_2)] = max(speed, curr_speed)
 
 
 def trace_path(parents, start, end):
@@ -265,7 +274,7 @@ def heuristic_distance(node_data, speeds, g_n, node2, next_node, child):
 def heuristic_speed(node_data, speeds, g_n, node2, next_node, child):
     curr_g_n = g_n.setdefault(child, float("inf"))
     curr_h_n = great_circle_distance(node_data[node2], node_data[child]) / 60
-    dist = great_circle_distance(node_data[next_node], node_data[child]) / speeds[(next_node, child)]
+    dist = great_circle_distance(node_data[next_node], node_data[child])
     return curr_g_n, curr_h_n, dist
 
 
@@ -351,8 +360,8 @@ def get_closest_node(nodes_data, node):
     current_distance = float("inf")
     current_node = None
 
-    graph, _ = get_loc_graph(node)
-    for test_node, location in graph.items():
+    graph, index = get_loc_graph(node)
+    for test_node, location in graphs[index].items():
         test_dist = great_circle_distance(node, location)
         if test_dist < current_distance:
             current_node = test_node
