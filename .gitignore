@@ -1,2 +1,9 @@
 .env
 venv
+nodes_data_all_saved.json
+nodes_data_saved.json
+nodes_graph_save.json
+nodes_graph_saved.json
+node_data_all.py
+node_data.py
+nodes_graph.py

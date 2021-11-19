@@ -26,10 +26,14 @@ session = boto3.Session(
 cambridge_nodes = ["cambridgedata","cambridge.nodes"]
 cambridge_ways =  ["cambridgedata","cambridge.ways"]
 
+
+
+
+
 print('building auxiliary structures...')
-t = time.time()
-aux = build_auxiliary_structures_s3(cambridge_nodes, cambridge_ways)
-print('auxiliary structures built in %.02f seconds.' % (time.time() - t,))
+# t = time.time()
+# aux = build_auxiliary_structures_s3(cambridge_nodes, cambridge_ways)
+# print('auxiliary structures built in %.02f seconds.' % (time.time() - t,))
 
 # s3 = session.resource('s3')
 # print(cambridge_nodes)
@@ -44,7 +48,7 @@ print('auxiliary structures built in %.02f seconds.' % (time.time() - t,))
 
 # print(cambridge_nodes["Body"].read())
 
-# aux = build_auxiliary_structures("./resources/cambridge.nodes", "./resources/cambridge.ways")
+aux = build_auxiliary_structures("./resources/cambridge.nodes", "./resources/cambridge.ways")
 # aux = build_auxiliary_structures_s3(cambridge_nodes, cambridge_ways)
 
 app = Flask(__name__)
@@ -59,7 +63,7 @@ def get_road(lat1, lon1,lat2, lon2):
     return json.dumps(nodes)
 
 
-# http://127.0.0.1:5000/road/42.2/-71.1/42.19/-70.9
+# # http://127.0.0.1:5000/road/42.2/-71.1/42.19/-70.9
 
 if __name__ == '__main__':
     # Threaded option to enable multiple instances for multiple user access support

@@ -3,9 +3,41 @@
 from util import read_osm_data,read_osm_data_s3, great_circle_distance, to_local_kml_url
 
 import time
+import boto3
+import os
+import json
 from node_data import node_data_saved
 from nodes_graph import nodes_graph_saved
-from node_data_all import node_data_all_saved
+# from node_data_all import node_data_all_saved
+
+
+nodes_saved_data_atr = ["cambridgedata","nodes_data_saved.json"]
+nodes_all_saved_data_atr = ["cambridgedata","nodes_data_all_saved.json"]
+node_graph_saved_atr = ["cambridgedata","nodes_graph_saved.json"]
+
+##can use a session
+session = boto3.Session(
+    aws_access_key_id=os.environ.get("ACCESS_KEY_ID"),
+    aws_secret_access_key=os.environ.get("SECRET_ACCESS_KEY"),
+)
+
+s3 = session.resource('s3')
+
+
+# # ##all data
+node_data_all_saved_obj = s3.Object(nodes_all_saved_data_atr[0],nodes_all_saved_data_atr[1])
+node_data_all_saved= json.load(node_data_all_saved_obj.get()['Body']) 
+
+# # # ###nodes saved
+# node_data_saved_obj = s3.Object(nodes_saved_data_atr[0],nodes_saved_data_atr[1])
+# node_data_saved = json.load(node_data_saved_obj.get()['Body'])[0]
+
+# # print(type(node_data_saved))
+# # # ###graph
+# nodes_graph_saved_obj = s3.Object(node_graph_saved_atr[0],node_graph_saved_atr[1])
+# nodes_graph_saved = json.load(nodes_graph_saved_obj.get()['Body']) 
+
+
 
 ALLOWED_HIGHWAY_TYPES = {
     'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified',
@@ -180,10 +212,14 @@ def build_auxiliary_structures(nodes_filename, ways_filename):
     """
 
     # get all the allowed ways and the nodes along those ways
+
+    
     nodes_graph = nodes_graph_saved
     speeds = {}
     node_data = node_data_all_saved
-    
+
+
+    # print(type(nodes_graph),type(node_data))
     # for way in read_osm_data(ways_filename):
     #     if way["tags"].get("highway", None) in ALLOWED_HIGHWAY_TYPES:
     #         for node_1, node_2 in zip(way["nodes"], way["nodes"][1:]):
@@ -360,7 +396,10 @@ def get_closest_node(nodes_data, node):
     current_distance = float("inf")
     current_node = None
 
+    print("node",node)
     graph, index = get_loc_graph(node)
+    print(graph,index)
+
     for test_node, location in graphs[index].items():
         test_dist = great_circle_distance(node, location)
         if test_dist < current_distance:

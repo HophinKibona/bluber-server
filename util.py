@@ -129,9 +129,10 @@ def read_osm_data_s3(bucket_name,key):
     with BytesIO() as data:
         s3.Bucket(bucket_name).download_fileobj(key, data)
         data.seek(0) 
+        # print(data[0])
         while True:
             try:   # move back to the beginning after writing
-                yield pickle.load(data)
+                yield data
             except EOFError:
                 break
 
