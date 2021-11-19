@@ -18,7 +18,7 @@ session = boto3.Session(
     aws_secret_access_key=os.environ.get("SECRET_ACCESS_KEY"),
 )
 
-response = client.list_buckets()
+# response = client.list_buckets()
 
 # cambridge_nodes = client.get_object(Bucket="cambridgedata",Key="cambridge.nodes")
 # cambridge_ways =  client.get_object(Bucket="cambridgedata",Key="cambridge.ways")
@@ -26,10 +26,10 @@ response = client.list_buckets()
 cambridge_nodes = ["cambridgedata","cambridge.nodes"]
 cambridge_ways =  ["cambridgedata","cambridge.ways"]
 
-print('building auxiliary structures...')
+# print('building auxiliary structures...')
 t = time.time()
-aux = build_auxiliary_structures_s3(cambridge_nodes, cambridge_ways)
-print('auxiliary structures built in %.02f seconds.' % (time.time() - t,))
+# aux = build_auxiliary_structures_s3(cambridge_nodes, cambridge_ways)
+# print('auxiliary structures built in %.02f seconds.' % (time.time() - t,))
 
 # s3 = session.resource('s3')
 # print(cambridge_nodes)
@@ -53,10 +53,10 @@ app = Flask(__name__)
 def index():
     return json.dumps([])
 
-@app.route('/road/<float:lat1>/<float(signed=True):lon1>/<float:lat2>/<float(signed=True):lon2>')
-def get_road(lat1, lon1,lat2, lon2):
-    nodes = find_short_path(aux, (lat1, lon1), (lat2, lon2)) 
-    return json.dumps(nodes)
+# @app.route('/road/<float:lat1>/<float(signed=True):lon1>/<float:lat2>/<float(signed=True):lon2>')
+# def get_road(lat1, lon1,lat2, lon2):
+#     nodes = find_short_path(aux, (lat1, lon1), (lat2, lon2)) 
+#     return json.dumps(nodes)
 
 
 # http://127.0.0.1:5000/road/42.2/-71.1/42.19/-70.9
