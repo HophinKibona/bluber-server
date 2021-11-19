@@ -359,7 +359,7 @@ def get_closest_node(nodes_data, node):
             current_distance = test_dist
     end = time.time()
 
-    print("find closest node took ", end-start)
+    # print("find closest node took ", end-start)
 
     return current_node
 
