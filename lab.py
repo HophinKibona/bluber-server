@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from util import read_osm_data, great_circle_distance, to_local_kml_url
+from util import read_osm_data,read_osm_data_s3, great_circle_distance, to_local_kml_url
 
 import time
 
@@ -179,7 +179,7 @@ def build_auxiliary_structures(nodes_filename, ways_filename):
     nodes_graph = {}
     speeds = {}
     node_data = {}
-
+    
     for way in read_osm_data(ways_filename):
         if way["tags"].get("highway", None) in ALLOWED_HIGHWAY_TYPES:
             for node_1, node_2 in zip(way["nodes"], way["nodes"][1:]):
@@ -198,6 +198,40 @@ def build_auxiliary_structures(nodes_filename, ways_filename):
 
     return nodes_graph, node_data, speeds
 
+def build_auxiliary_structures_s3(nodes_data, ways_data):
+    """
+    Create any auxiliary structures you are interested in, by reading the data
+    from the given filenames (using read_osm_data)
+
+    Returns:
+        nodes_graph: dict => {node_id: set =>{nodes connected to it}}
+        speeds: dict => {(node_1, node_2): speed between them}
+        node_data: dict => {node_id: dict => {"lat": latitude, "lon": longitude}}
+    """
+
+    # get all the allowed ways and the nodes along those ways
+    nodes_graph = {}
+    speeds = {}
+    node_data = {}
+    
+    for way in read_osm_data_s3(ways_data[0],ways_data[1]):
+    # for way in read_osm_data(ways_filename):
+        if way["tags"].get("highway", None) in ALLOWED_HIGHWAY_TYPES:
+            for node_1, node_2 in zip(way["nodes"], way["nodes"][1:]):
+                speed = 1
+                update_auxiliary_structures(nodes_graph, speeds, node_1, node_2, speed)
+                if way["tags"].get("oneway", "no") == "no":
+                    update_auxiliary_structures(nodes_graph, speeds, node_2, node_1, speed)
+
+    for node in read_osm_data_s3(nodes_data[0],nodes_data[1]):
+        if node["id"] in nodes_graph:
+            node_data[node["id"]] = (node["lat"], node["lon"])
+
+            id, loc = node["id"], (node["lat"], node["lon"])
+            graph, _ = get_loc_graph(loc)
+            graph[id] = loc
+
+    return nodes_graph, node_data, speeds
 
 def update_auxiliary_structures(nodes_graph, speeds, node_1, node_2, speed):
     """

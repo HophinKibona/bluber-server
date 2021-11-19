@@ -4,9 +4,19 @@ import gzip
 import base64
 import pickle
 import urllib.parse
+import boto3
+import os
+from io import BytesIO
 
 from math import acos,cos,sin,pi,atan2
 
+##can use a session
+session = boto3.Session(
+    aws_access_key_id=os.environ.get("ACCESS_KEY_ID"),
+    aws_secret_access_key=os.environ.get("SECRET_ACCESS_KEY"),
+)
+
+s3 = session.resource('s3')
 
 def great_circle_distance(loc1, loc2):
     """
@@ -96,6 +106,32 @@ def read_osm_data(filename):
         while True:
             try:
                 yield pickle.load(f)
+            except EOFError:
+                break
+
+
+def read_osm_data_s3(bucket_name,key):
+    """
+    Yield elements from the given filename, which is assumed to contain a
+    series of pickled[1] Python objects, stacked end-to-end.
+
+    This structure allows reading the large structures necessary for lab 2
+    without loading the entire file into memory at once, and should be much
+    faster than reading directly from a .osm file.
+
+    Example usage:
+        for element in read_osm_data('some_file'):
+            print(element)
+
+    [1] see https://docs.python.org/3/library/pickle.html
+    """
+
+    with BytesIO() as data:
+        s3.Bucket(bucket_name).download_fileobj(key, data)
+        data.seek(0) 
+        while True:
+            try:   # move back to the beginning after writing
+                yield pickle.load(data)
             except EOFError:
                 break
 
